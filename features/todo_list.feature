@@ -1,42 +1,34 @@
-Feature: Agregar tarea
+Feature: Todo List
 
-  Scenario: Usuario agrega una nueva tarea
-    Given que el usuario inicia la aplicación
-    When ingresa los detalles de la tarea
-      | nombre   | Comprar víveres |
-      | prioridad | alta |
-      | categoría | personal |
-      | fecha     | 2023-03-01 |
-    Then la tarea debe ser agregada a la lista
+  Scenario: Add a task
+    Given the task list is empty
+    When I add the task "Buy milk"
+    Then the task list should contain 1 task
 
-Feature: Listar tareas
+  Scenario: List tasks
+    Given the task list contains
+      | Buy milk |
+      | Call doctor |
+    When I list the tasks
+    Then it should show
+      | 1. Buy milk - Incomplete |
+      | 2. Call doctor - Incomplete |
 
-  Scenario: Listar tareas existentes
-    Given que existen tareas en la lista
-    When el usuario selecciona listar tareas
-    Then se deben mostrar todas las tareas con sus detalles
+  Scenario: Mark a task as completed
+    Given the task list contains
+      | Buy milk |
+    When I mark task 1 as completed
+    Then task 1 should appear as completed
 
-Feature: Marcar tarea como completa
+  Scenario: Edit a task
+    Given the task list contains
+      | Buy milk |
+    When I edit task 1 to "Buy skim milk"
+    Then task 1 should say "Buy skim milk"
 
-  Scenario: Marcar una tarea como completada
-    Given que existen tareas en la lista
-    When el usuario selecciona una tarea
-      And la marca como completada
-    Then el estado de la tarea se actualiza a completada
-
-Feature: Eliminar tareas
-
-  Scenario: Usuario elimina todas las tareas
-    Given que existen tareas en la lista
-    When el usuario selecciona eliminar tareas
-      And confirma que desea eliminar
-    Then la lista de tareas se vacía
-
-Feature: Editar tarea
-
-  Scenario: Editar detalles de una tarea
-    Given que existen tareas en la lista
-    When el usuario selecciona editar una tarea
-      And modifica los detalles
-      | nombre   | Comprar víveres y artículos de limpieza |
-    Then la tarea se actualiza con los nuevos datos
+  Scenario: Clear the task list
+    Given the task list contains
+      | Buy milk |
+      | Call doctor |
+    When I clear the task list
+    Then the task list should be empty

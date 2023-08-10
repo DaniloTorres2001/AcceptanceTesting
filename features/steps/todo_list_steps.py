@@ -1,90 +1,63 @@
-# imports
-import pytest
+import io
+from contextlib import redirect_stdout
+import todo_list
+from behave import *
 
-from behave import given,when,then
-from todo_list import tasks, add_task, list_tasks, mark_complete, clear_tasks, edit_task
-
-# Steps para "Agregar tarea"
-tasks = [{'name': 'Tarea 1', 'completed': False}]
-
-@given('que el usuario inicia la aplicación')
+@given('the task list is empty')
 def step_impl(context):
-  print('Iniciando aplicación')
+  todo_list.tasks = []
 
-@when('ingresa los detalles de la tarea')
-def step_impl(context, nombre, prioridad, categoria, fecha):
-  add_task(nombre, prioridad, categoria, fecha)
+@when('I add the task "{task}"')
+def step_impl(context, task):
+  todo_list.add_task(task)
 
-@then('la tarea debe ser agregada a la lista')
+@then('the task list should contain {count:d} task')
+def step_impl(context, count):
+  assert len(todo_list.tasks) == count
+
+@given('the task list contains')
 def step_impl(context):
-  assert context.nombre in tasks, f"La tarea {context.nombre} no fue agregada"
+  for row in context.table:
+    todo_list.add_task(row[0])
 
-# Steps para "Listar tareas"
-
-@given('que existen tareas en la lista')
+@when('I list the tasks')
 def step_impl(context):
-  assert tasks, "No hay tareas para listar"
+  output = io.StringIO()
+  with redirect_stdout(output):
+    todo_list.list_tasks()
+  context.output = output.getvalue()
 
-@when('el usuario selecciona listar tareas')
+@then('it should show')
 def step_impl(context):
-  print('Listando tareas...')
-  list_tasks()
+  output = context.output.split('\n')
+  tasks = todo_list.tasks
+  for i in range(len(tasks)):
+    row = output[i]
+    description = row.split('. ')[1].split(' - ')[0]
+    status = 'Completed' if tasks[i]['completed'] else 'Incomplete'
+    assert description == tasks[i]['description']
+    assert status in row
 
-@then('se deben mostrar todas las tareas con sus detalles')
+@when('I mark task {index:d} as completed')
+def step_impl(context, index):
+  todo_list.mark_completed(index)
+
+@then('task {index:d} should appear as completed')
+def step_impl(context, index):
+  assert todo_list.tasks[index-1]['completed'] == True
+
+@when('I edit task {index:d} to "{text}"')
+def step_impl(context, index, text):
+  todo_list.edit_task(index, text)
+
+@then('task {index:d} should say "{text}"')
+def step_impl(context, index, text):
+  assert todo_list.tasks[index-1]['description'] == text
+
+@when('I clear the task list')
 def step_impl(context):
-  print('Validando detalles...')
-  # Código para validar detalles
+  todo_list.clear_tasks()
 
-# Steps para "Marcar tarea como completa"
-
-@given('que existen tareas en la lista')
+@then('the task list should be empty')
 def step_impl(context):
-  assert tasks, "No hay tareas para marcar"
-
-@when('el usuario selecciona una tarea')
-def step_impl(context):
-  print('Seleccionando tarea...')
-
-@when('la marca como completada')
-def step_impl(context):
-  tasks[0]['completed'] = True
-
-@then('el estado de la tarea se actualiza a completada')
-def step_impl(context):
-  assert tasks[0]['completed'] == True
-
-@given('que existen tareas en la lista')
-def step_impl(context):
-  # Crear tareas de prueba
-  global tasks
-  tasks = ['Tarea 1', 'Tarea 2']
-
-@when('el usuario selecciona eliminar tareas')
-def step_impl(context):
-  print('Eliminando tareas...')
-
-@when('confirma que desea eliminar')
-def step_impl(context):
-  print('Confirmado')
-
-@then('la lista de tareas se vacía')
-def step_impl(context):
-  assert len(tasks) == 0, "La lista de tareas no está vacía"
-
-@given('que existen tareas en la lista')
-def step_impl(context):
-  # Crear tareas de prueba
-  global tasks
-  tasks = [{'nombre': 'Tarea 1'}]
-
-@when('el usuario selecciona editar una tarea')
-def step_impl(context):
-  print('Editando tarea...')
-
-@when('modifica los detalles')
-def step_impl(context, nombre):
-  edit_task(0, nombre=nombre)
-
-@then('la tarea se actualiza con los nuevos datos')
-def step_impl(context):
-  assert tasks[0]['nombre'] == context.nombre, "El nombre no se actualizó"
+  assert len(todo_list.tasks) == 0
